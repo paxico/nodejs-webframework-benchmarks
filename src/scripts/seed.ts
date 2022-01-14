@@ -1,6 +1,7 @@
 import { ISalesPerson, IProduct, ISales } from '../interfaces';
 import assert from 'assert';
 import { MongoClient } from 'mongodb';
+import seedrandom from 'seedrandom';
 
 
 assert(process.env.MONGODB_URI, 'missing env var MONGODB_URI');
@@ -30,7 +31,7 @@ const generateSalesPeople = async () => {
   const results = await Promise.all(items.map((i) => collection.insertOne(i)));
 
   return results.map((doc, index) => {
-    return { _id: doc.insertedId.toHexString(), ...items[index] } as ISalesPerson
+    return { ...items[index], _id: doc.insertedId.toHexString() } as ISalesPerson
   });
 }
 
@@ -46,12 +47,14 @@ const generateProducts = async () => {
   const results = await Promise.all(items.map((i) => collection.insertOne(i)));
 
   return results.map((doc, index) => {
-    return { _id: doc.insertedId.toHexString(), ...items[index] } as IProduct;
+    return { ...items[index], _id: doc.insertedId.toHexString() } as IProduct;
   });
 }
 
+const rnd = seedrandom('omgwhichframeworkisthefastest');
+
 const random = (min: number, max: number) => {
-  return Math.floor(Math.random() * (max - min + 1) + min);
+  return Math.floor(rnd() * (max - min + 1) + min);
 }
 
 const generateSales = async (products: IProduct[], people: ISalesPerson[], count: number) => {
@@ -62,7 +65,7 @@ const generateSales = async (products: IProduct[], people: ISalesPerson[], count
   for (let i = 0; i < count; i++) {
     const person = people[random(0, people.length - 1)];
     const product = products[random(0, products.length - 1)];
-    promises.push([collection.insertOne({ salesPersonId: person._id, productId: product._id, amount: random(product.msrp, product.msrp + 200) })]);
+    promises.push(collection.insertOne({ salesPersonId: person._id, productId: product._id, amount: random(product.msrp, product.msrp + 200) }));
 
     if (promises.length >= 100) {
       await Promise.all(promises);
@@ -77,4 +80,5 @@ const generateSales = async (products: IProduct[], people: ISalesPerson[], count
   const products = await generateProducts();
   
   await generateSales(products, people, 1000);
+  process.exit(0);
 })();

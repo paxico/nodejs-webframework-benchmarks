@@ -6,7 +6,7 @@ export interface ISalesPerson {
 
 export interface ISalesSummary {
   salesPersonName: string;
-  monthlyAverage: number;
+  average: number;
   total: number;
 }
 
